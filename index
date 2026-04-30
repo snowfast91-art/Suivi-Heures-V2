@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Suivi des heures – Poseurs</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100vh}
+input{font-family:inherit;font-size:16px;padding:10px 12px;border:1px solid #d1d1d6;border-radius:10px;width:100%;background:#fff;color:#1c1c1e;outline:none}
+input:focus{border-color:#378ADD;box-shadow:0 0 0 3px rgba(55,138,221,.15)}
+button{font-family:inherit;cursor:pointer}
+.page{display:none;flex-direction:column;min-height:100vh}
+.page.active{display:flex}
+.header{background:#fff;border-bottom:0.5px solid #e0e0e5;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.header-title{font-size:17px;font-weight:600}
+.header-sub{font-size:12px;color:#8e8e93;margin-top:1px}
+.back-btn{background:none;border:none;font-size:22px;color:#8e8e93;padding:0 4px;line-height:1}
+.content{padding:16px;flex:1;padding-bottom:80px}
+.card{background:#fff;border-radius:14px;border:0.5px solid #e0e0e5;padding:16px;margin-bottom:12px}
+.label{font-size:12px;color:#8e8e93;margin-bottom:5px;display:block;font-weight:500}
+.field{margin-bottom:12px}
+.save-btn{width:100%;padding:14px;background:#1D9E75;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;margin-top:8px}
+.save-btn:active{opacity:.8}
+.tech-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:#fff;border:0.5px solid #e0e0e5;border-radius:14px;padding:14px 16px;margin-bottom:10px;text-align:left}
+.tech-btn:active{background:#f7f7f7}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0}
+.badge{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge.ok{background:#E1F5EE;color:#085041}
+.badge.nok{background:#FCEBEB;color:#A32D2D}
+.tab-bar{display:flex;background:#e5e5ea;border-radius:10px;padding:3px;margin-bottom:16px}
+.tab-btn{flex:1;padding:8px 0;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:500;color:#8e8e93;transition:all .2s}
+.tab-btn.active{background:#fff;color:#1c1c1e;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.toggle-row{display:flex;background:#e5e5ea;border-radius:10px;padding:3px;margin-bottom:12px}
+.toggle-btn{flex:1;padding:8px 6px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:500;color:#8e8e93;transition:all .2s}
+.toggle-btn.active{background:#fff;color:#1c1c1e;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.colis-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.colis-btn{padding:10px 6px;border:1px solid #d1d1d6;border-radius:10px;background:#fff;font-size:13px;color:#1c1c1e;text-align:center}
+.colis-btn.active{background:#E6F1FB;border-color:#378ADD;color:#0C447C;font-weight:600}
+.slot-card{background:#f7f7f7;border-radius:10px;padding:12px;margin-bottom:10px;position:relative}
+.slot-title{font-size:12px;font-weight:600;color:#8e8e93;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.slot-remove{background:none;border:none;font-size:16px;color:#ff3b30;padding:0;line-height:1}
+.add-slot-btn{width:100%;padding:11px;border:1px dashed #d1d1d6;border-radius:10px;background:transparent;font-size:14px;color:#378ADD;font-weight:500;margin-top:2px;margin-bottom:12px}
+.stat-box{background:#f7f7f7;border-radius:10px;padding:12px 14px;margin-top:10px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:13px}
+.sep{border:none;border-top:0.5px solid #e0e0e5;margin:6px 0}
+.progress-bar{height:6px;background:#e0e0e5;border-radius:3px;overflow:hidden;margin:6px 0 4px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.day-row{background:#fff;border-radius:12px;border:0.5px solid #e0e0e5;padding:14px;margin-bottom:8px}
+.day-row.today{border-left:3px solid #1D9E75}
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.nav-btn{background:none;border:none;font-size:22px;color:#378ADD;padding:4px 10px}
+.summary-card{background:#fff;border-radius:14px;border:0.5px solid #e0e0e5;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.ot-card{background:#fff;border-radius:14px;border:0.5px solid #e0e0e5;padding:14px 16px;margin-bottom:10px;border-left:3px solid #EF9F27}
+.export-info{background:#f7f7f7;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.7}
+.pdf-btn{width:100%;padding:13px;border:1px solid #d1d1d6;border-radius:12px;background:#fff;font-size:14px;font-weight:500;color:#1c1c1e}
+.pdf-btn:active{background:#f7f7f7}
+.hint{font-size:11px;color:#aeaeb2;margin-top:8px;line-height:1.5}
+.saved-msg{display:none;color:#1D9E75;font-size:13px;font-weight:500;margin-top:6px;text-align:center}
+.info-btn{background:none;border:1px solid #d1d1d6;border-radius:10px;padding:6px 12px;font-size:13px;color:#378ADD;font-weight:500;white-space:nowrap}
+.is{margin-bottom:18px}
+.is h2{font-size:15px;font-weight:600;margin-bottom:8px}
+.is p,.is li{font-size:13px;color:#3c3c43;line-height:1.65;margin-bottom:3px}
+.is ul{padding-left:18px}
+.box-warn{background:#FAEEDA;border-radius:10px;padding:12px;border-left:3px solid #EF9F27;margin-bottom:6px}
+.box-danger{background:#FCEBEB;border-radius:10px;padding:12px;border-left:3px solid #E24B4A;margin-bottom:6px}
+.box-ok{background:#E1F5EE;border-radius:10px;padding:12px;border-left:3px solid #1D9E75}
+</style>
+</head>
+<body>
+
+<!-- ACCUEIL -->
+<div class="page active" id="page-home">
+  <div class="header">
+    <div style="flex:1">
+      <div class="header-title">Suivi des heures</div>
+      <div class="header-sub">Sélectionnez votre nom</div>
+    </div>
+    <button class="info-btn" onclick="openInfo()">Règles &amp; Lois</button>
+  </div>
+  <div class="content" id="tech-list"></div>
+</div>
+
+<!-- TECHNICIEN -->
+<div class="page" id="page-tech">
+  <div class="header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div id="tech-avatar" class="avatar" style="margin-right:2px"></div>
+    <div style="flex:1">
+      <div class="header-title" id="tech-name-title"></div>
+      <div class="header-sub" id="tech-week-sub"></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('saisie',this)">Saisie</button>
+      <button class="tab-btn" onclick="switchTab('semaine',this)">Semaine</button>
+      <button class="tab-btn" onclick="switchTab('export',this)">Export</button>
+    </div>
+
+    <!-- SAISIE -->
+    <div id="tab-saisie">
+      <div class="card">
+        <div class="field">
+          <label class="label">Date</label>
+          <input type="date" id="input-date" onchange="onDateChange()">
+        </div>
+
+        <label class="label">Mode de saisie</label>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="mode-simple" onclick="setMode('simple')">Chantier unique</button>
+          <button class="toggle-btn" id="mode-multiple" onclick="setMode('multiple')">Chantiers multiples</button>
+        </div>
+
+        <div id="slots-container"></div>
+        <button class="add-slot-btn" id="add-slot-btn" style="display:none" onclick="addSlot()">+ Ajouter un chantier</button>
+
+        <label class="label">Récupération de colis à l'atelier</label>
+        <div class="colis-row">
+          <button class="colis-btn active" id="colis-none" onclick="setColis('none')">Aucun passage</button>
+          <button class="colis-btn" id="colis-avant" onclick="setColis('avant')">Avant intervention</button>
+          <button class="colis-btn" id="colis-apres" onclick="setColis('apres')">Après intervention</button>
+          <button class="colis-btn" id="colis-les_deux" onclick="setColis('les_deux')">Avant &amp; après</button>
+        </div>
+
+        <div class="stat-box" id="hours-summary" style="display:none">
+          <div class="stat-row"><span style="color:#8e8e93">Temps brut</span><span style="font-weight:600" id="sum-gross"></span></div>
+          <div class="stat-row"><span style="color:#E24B4A">Pause déduite (obligatoire)</span><span style="font-weight:600;color:#E24B4A" id="sum-pause"></span></div>
+          <hr class="sep">
+          <div class="stat-row"><span style="font-weight:600">Temps net</span><span style="font-weight:700;font-size:18px" id="sum-net"></span></div>
+          <div class="stat-row" id="sum-supp-row" style="display:none"><span style="color:#633806">dont heures supp. (&gt;8h)</span><span style="font-weight:600;color:#633806" id="sum-supp"></span></div>
+        </div>
+
+        <button class="save-btn" onclick="saveEntry()">Enregistrer</button>
+        <div class="saved-msg" id="saved-msg">✓ Enregistré</div>
+
+        <div class="stat-box" style="margin-top:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:13px;color:#8e8e93">Semaine glissante (7j nets)</span>
+            <span style="font-size:13px;font-weight:600" id="rolling-label"></span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="rolling-bar"></div></div>
+          <div style="font-size:12px;text-align:right;margin-top:2px" id="rolling-diff"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEMAINE -->
+    <div id="tab-semaine" style="display:none">
+      <div class="week-nav">
+        <button class="nav-btn" onclick="changeWeek(-1)">←</button>
+        <span style="font-size:13px;font-weight:500;color:#8e8e93" id="week-label"></span>
+        <button class="nav-btn" onclick="changeWeek(1)">→</button>
+      </div>
+      <div class="summary-card">
+        <div>
+          <div style="font-size:12px;color:#8e8e93">Heures nettes</div>
+          <div style="font-size:26px;font-weight:700" id="week-total"></div>
+        </div>
+        <div id="week-badge"></div>
+      </div>
+      <div id="week-ot-card" class="ot-card" style="display:none">
+        <div style="font-size:13px;font-weight:600;color:#633806;margin-bottom:8px">Heures supplémentaires</div>
+        <div class="stat-row"><span style="color:#8e8e93;font-size:13px">+25% (36e–43e h)</span><span style="font-weight:600;color:#633806" id="ot-25"></span></div>
+        <div class="stat-row"><span style="color:#8e8e93;font-size:13px">+50% (44e h et +)</span><span style="font-weight:600;color:#A32D2D" id="ot-50"></span></div>
+      </div>
+      <div id="week-days"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div id="tab-export" style="display:none">
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:12px">Exporter un rapport</div>
+        <div class="field">
+          <label class="label">Semaine (choisir n'importe quel jour)</label>
+          <input type="date" id="export-date" onchange="updateExportPreview()">
+        </div>
+        <div class="export-info" id="export-preview"></div>
+        <button class="pdf-btn" onclick="generateReport()">Télécharger le rapport</button>
+        <p class="hint">Ouvrez le fichier dans votre navigateur → Fichier → Imprimer → Enregistrer en PDF.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO -->
+<div class="page" id="page-info">
+  <div class="header">
+    <button class="back-btn" onclick="closeInfo()">←</button>
+    <div>
+      <div class="header-title">Règles &amp; Lois</div>
+      <div class="header-sub">Code du travail – Heures supplémentaires</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="is">
+        <h2>Définition</h2>
+        <p>Les heures supplémentaires sont les heures effectuées <strong>au-delà de 35h par semaine</strong>. Elles se déclenchent à partir de la <strong>36e heure</strong> et doivent être demandées ou validées par l'employeur.</p>
+      </div>
+      <div class="is">
+        <h2>Majoration de salaire</h2>
+        <div class="box-warn">
+          <p><strong>+25 %</strong> : de la 36e à la 43e heure</p>
+          <p><strong>+50 %</strong> : à partir de la 46e heure</p>
+        </div>
+      </div>
+      <div class="is">
+        <h2>Durées maximales</h2>
+        <ul>
+          <li>10h par jour (sauf dérogation)</li>
+          <li>48h par semaine maximum</li>
+          <li>44h en moyenne sur 12 semaines</li>
+        </ul>
+      </div>
+      <div class="is">
+        <h2>Validation obligatoire</h2>
+        <div class="box-danger">
+          <p>Les heures supplémentaires doivent être <strong>demandées et validées au préalable</strong> par la hiérarchie.</p>
+          <ul style="margin-top:6px">
+            <li>Toute heure non validée ne sera pas prise en compte.</li>
+            <li>Les heures incohérentes avec l'activité réelle ne seront pas validées.</li>
+            <li>Rester sur chantier sans autorisation n'est pas une validation implicite.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="is">
+        <h2>Pause obligatoire</h2>
+        <div class="box-warn">
+          <p>Une pause est obligatoire toutes les <strong>6 heures de travail</strong>.</p>
+          <p>Qu'elle soit prise ou non, elle est <strong>obligatoirement déduite</strong> du temps de travail.</p>
+          <p style="margin-top:4px;font-style:italic;color:#8e8e93">La pause n'est pas forcément une pause déjeuner — c'est un temps de repos obligatoire.</p>
+        </div>
+      </div>
+      <div class="is">
+        <h2>Déclarations inexactes</h2>
+        <div class="box-danger">
+          <p>Toute déclaration volontairement inexacte ou falsifiée constitue une <strong>fraude</strong> pouvant entraîner :</p>
+          <ul style="margin-top:6px">
+            <li>Des mesures disciplinaires</li>
+            <li>Des sanctions</li>
+          </ul>
+        </div>
+      </div>
+      <div class="is">
+        <div class="box-ok">
+          <p>Le respect de ces règles garantit une gestion équitable du temps de travail, le respect du cadre légal, et la bonne organisation des chantiers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TECHNICIANS=["Ian","Jimmy","Aren","Rudy","Michel","Cédric"];
+const TARGET=35,DAY_BASE=8;
+const COLORS=[
+  {bg:"#EEEDFE",fg:"#3C3489"},{bg:"#E1F5EE",fg:"#085041"},
+  {bg:"#FAECE7",fg:"#993C1D"},{bg:"#E6F1FB",fg:"#0C447C"},
+  {bg:"#FAEEDA",fg:"#633806"},{bg:"#FBEAF0",fg:"#72243E"}
+];
+const KEY="suivi_v3";
+let cTech=null,cWeekStart=null,cMode="simple",cColis="none",cSlots=[{start:"",end:"",chantier:""}];
+let db={};
+
+function load(){try{const r=localStorage.getItem(KEY);db=r?JSON.parse(r):{}}catch{db={}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch{}}
+load();
+
+const pad=n=>String(n).padStart(2,"0");
+const toDay=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const fmt=s=>{if(!s)return "";const[y,m,d]=s.split("-");return `${d}/${m}/${y}`};
+function calcH(s,e){
+  if(!s||!e)return 0;
+  const[sh,sm]=s.split(":").map(Number),[eh,em]=e.split(":").map(Number);
+  const d=(eh*60+em)-(sh*60+sm);return d>0?d/60:0;
+}
+function computeH(slots){
+  const gross=slots.reduce((s,sl)=>s+calcH(sl.start,sl.end),0);
+  const pause=gross>=6?1:0,net=Math.max(0,gross-pause),ot=Math.max(0,net-DAY_BASE);
+  return{gross,pause,net,ot};
+}
+function weeklyOT(tot){
+  if(tot<=TARGET)return{h25:0,h50:0};
+  const s=tot-TARGET,h25=Math.min(s,8),h50=Math.max(0,s-8);
+  return{h25,h50};
+}
+function getWS(str){
+  const d=new Date(str),day=d.getDay()===0?6:d.getDay()-1;
+  d.setDate(d.getDate()-day);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function getWD(ws){
+  const days=[];for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(d.getDate()+i);days.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`)}
+  return days;
+}
+function last7(){
+  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`)}
+  return days;
+}
+function totNet(tech,days){
+  return days.reduce((s,d)=>{const e=db[tech]?.[d];if(!e)return s;return s+computeH(e.slots||[]).net},0);
+}
+
+function renderHome(){
+  const L=document.getElementById("tech-list");L.innerHTML="";
+  TECHNICIANS.forEach((name,i)=>{
+    const tot=totNet(name,last7()),ok=tot>=TARGET,c=COLORS[i];
+    const btn=document.createElement("button");btn.className="tech-btn";
+    btn.innerHTML=`<div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="background:${c.bg};color:${c.fg}">${name.slice(0,2).toUpperCase()}</div><div><div style="font-size:16px;font-weight:600">${name}</div><div style="font-size:12px;color:#8e8e93">${tot.toFixed(1)}h nettes / 7 jours</div></div></div><span class="badge ${ok?"ok":"nok"}">${ok?"35h ✓":`${(TARGET-tot).toFixed(1)}h rest.`}</span>`;
+    btn.onclick=()=>openTech(name,i);L.appendChild(btn);
+  });
+}
+
+function openInfo(){show("info")}
+function closeInfo(){show("home");renderHome()}
+
+function openTech(name,idx){
+  cTech=name;cWeekStart=getWS(toDay());
+  const c=COLORS[idx],av=document.getElementById("tech-avatar");
+  av.style.background=c.bg;av.style.color=c.fg;av.textContent=name.slice(0,2).toUpperCase();
+  document.getElementById("tech-name-title").textContent=name;
+  const td=toDay();
+  document.getElementById("input-date").value=td;
+  document.getElementById("input-date").max=td;
+  document.getElementById("export-date").value=td;
+  show("tech");
+  loadEntry(td);refreshRolling();
+  document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",i===0));
+  ["saisie","semaine","export"].forEach(t=>document.getElementById("tab-"+t).style.display=t==="saisie"?"block":"none");
+  updateExportPreview();
+}
+function goHome(){show("home");renderHome()}
+function show(p){["home","tech","info"].forEach(x=>document.getElementById("page-"+x).classList.toggle("active",x===p))}
+
+function switchTab(name,el){
+  ["saisie","semaine","export"].forEach(t=>document.getElementById("tab-"+t).style.display=t===name?"block":"none");
+  if(el){document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));el.classList.add("active")}
+  if(name==="semaine")renderWeek();
+}
+
+function setMode(m){
+  cMode=m;
+  document.getElementById("mode-simple").classList.toggle("active",m==="simple");
+  document.getElementById("mode-multiple").classList.toggle("active",m==="multiple");
+  document.getElementById("add-slot-btn").style.display=m==="multiple"?"block":"none";
+  if(m==="simple"&&cSlots.length>1)cSlots=[cSlots[0]];
+  renderSlots();updateSummary();
+}
+
+function setColis(v){
+  cColis=v;
+  ["none","avant","apres","les_deux"].forEach(k=>document.getElementById("colis-"+k).classList.toggle("active",k===v));
+}
+
+function addSlot(){cSlots.push({start:"",end:"",chantier:""});renderSlots()}
+function removeSlot(i){if(cSlots.length<=1)return;cSlots.splice(i,1);renderSlots();updateSummary()}
+
+function renderSlots(){
+  const C=document.getElementById("slots-container");C.innerHTML="";
+  cSlots.forEach((sl,i)=>{
+    const isM=cMode==="multiple",div=document.createElement("div");
+    div.className=isM?"slot-card":"field";
+    div.innerHTML=`${isM?`<div class="slot-title">Chantier ${i+1}${cSlots.length>1?`<button class="slot-remove" onclick="removeSlot(${i})">✕</button>`:""}</div>`:""}
+    <label class="label">Référence chantier</label>
+    <input type="text" placeholder="Ex: CH-2024-042" value="${sl.chantier}" oninput="updateSlot(${i},'chantier',this.value)" style="margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="label">Arrivée</label><input type="time" value="${sl.start}" oninput="updateSlot(${i},'start',this.value)"></div>
+      <div><label class="label">Départ</label><input type="time" value="${sl.end}" oninput="updateSlot(${i},'end',this.value)"></div>
+    </div>`;
+    C.appendChild(div);
+  });
+}
+
+function updateSlot(i,f,v){cSlots[i][f]=v;updateSummary()}
+
+function updateSummary(){
+  const h=computeH(cSlots),box=document.getElementById("hours-summary");
+  if(!cSlots.some(s=>s.start&&s.end)){box.style.display="none";return}
+  box.style.display="block";
+  document.getElementById("sum-gross").textContent=h.gross.toFixed(2)+"h";
+  document.getElementById("sum-pause").textContent=h.pause>0?"-1h":"Aucune";
+  document.getElementById("sum-net").textContent=h.net.toFixed(2)+"h";
+  const sr=document.getElementById("sum-supp-row");
+  if(h.ot>0){sr.style.display="flex";document.getElementById("sum-supp").textContent="+"+h.ot.toFixed(2)+"h"}
+  else sr.style.display="none";
+}
+
+function loadEntry(d){
+  const e=db[cTech]?.[d];
+  cColis=e?.colis||"none";cMode=e?.mode||"simple";
+  cSlots=e?.slots?JSON.parse(JSON.stringify(e.slots)):[{start:"",end:"",chantier:""}];
+  setMode(cMode);setColis(cColis);renderSlots();updateSummary();
+  document.getElementById("saved-msg").style.display="none";
+}
+function onDateChange(){loadEntry(document.getElementById("input-date").value)}
+
+function saveEntry(){
+  const d=document.getElementById("input-date").value;
+  if(!db[cTech])db[cTech]={};
+  const h=computeH(cSlots);
+  db[cTech][d]={mode:cMode,slots:JSON.parse(JSON.stringify(cSlots)),colis:cColis,...h};
+  save();
+  const msg=document.getElementById("saved-msg");msg.style.display="block";
+  setTimeout(()=>msg.style.display="none",2000);
+  refreshRolling();
+  document.getElementById("tech-week-sub").textContent=totNet(cTech,last7()).toFixed(1)+"h nettes / "+TARGET+"h";
+}
+
+function refreshRolling(){
+  const tot=totNet(cTech,last7()),pct=Math.min((tot/TARGET)*100,100);
+  document.getElementById("rolling-label").textContent=tot.toFixed(1)+"h / "+TARGET+"h";
+  const bar=document.getElementById("rolling-bar");
+  bar.style.width=pct+"%";bar.style.background=tot>=TARGET?"#1D9E75":"#378ADD";
+  const diff=tot-TARGET,el=document.getElementById("rolling-diff");
+  el.style.color=diff>=0?"#085041":"#A32D2D";
+  el.textContent=diff>=0?`+${diff.toFixed(1)}h au-dessus de l'objectif`:`${Math.abs(diff).toFixed(1)}h restantes`;
+}
+
+function changeWeek(dir){
+  const d=new Date(cWeekStart);d.setDate(d.getDate()+dir*7);
+  cWeekStart=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;renderWeek();
+}
+
+function renderWeek(){
+  const days=getWD(cWeekStart),end=days[6];
+  document.getElementById("week-label").textContent=`Sem. ${fmt(cWeekStart)} → ${fmt(end)}`;
+  const tot=totNet(cTech,days);
+  document.getElementById("week-total").textContent=tot.toFixed(1)+"h";
+  const ok=tot>=TARGET;
+  document.getElementById("week-badge").innerHTML=`<span class="badge ${ok?"ok":"nok"}">${ok?"Objectif atteint":`${(TARGET-tot).toFixed(1)}h rest.`}</span>`;
+  const ot=weeklyOT(tot),otCard=document.getElementById("week-ot-card");
+  if(ot.h25>0||ot.h50>0){
+    otCard.style.display="block";
+    document.getElementById("ot-25").textContent=ot.h25.toFixed(2)+"h";
+    document.getElementById("ot-50").textContent=ot.h50.toFixed(2)+"h";
+  } else otCard.style.display="none";
+  const today=toDay(),C=document.getElementById("week-days");C.innerHTML="";
+  const colisLbl={"none":"","avant":"Atelier avant","apres":"Atelier après","les_deux":"Atelier avant & après"};
+  days.forEach(d=>{
+    const e=db[cTech]?.[d],h=e?computeH(e.slots||[]):{net:0,ot:0};
+    const isToday=d===today;let chantiersHtml="";
+    if(e?.slots){
+      if(e.mode==="multiple")chantiersHtml=e.slots.map(s=>`<div style="font-size:12px;color:#8e8e93">${s.chantier||"?"} : ${s.start}–${s.end} (${calcH(s.start,s.end).toFixed(2)}h)</div>`).join("");
+      else{const s=e.slots[0];if(s?.chantier)chantiersHtml+=`<div style="font-size:12px;color:#8e8e93">Chantier : ${s.chantier}</div>`;if(s?.start)chantiersHtml+=`<div style="font-size:12px;color:#8e8e93">${s.start} → ${s.end}</div>`;}
+    }
+    const cl=e?.colis&&e.colis!=="none"?colisLbl[e.colis]:"";
+    const div=document.createElement("div");div.className="day-row"+(isToday?" today":"");
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1;margin-right:8px"><div style="font-size:14px;font-weight:600">${fmt(d)}${isToday?" · Aujourd'hui":""}</div>${chantiersHtml}${cl?`<div style="font-size:12px;color:#378ADD;margin-top:2px">${cl}</div>`:""}${!e?`<div style="font-size:12px;color:#aeaeb2;font-style:italic">Non renseigné</div>`:""}</div><div style="text-align:right;flex-shrink:0"><div style="font-size:20px;font-weight:700;color:${h.net>0?"#1c1c1e":"#aeaeb2"}">${h.net>0?h.net.toFixed(2)+"h":"—"}</div>${h.ot>0?`<div style="font-size:11px;color:#633806">+${h.ot.toFixed(2)}h supp.</div>`:""}</div></div>`;
+    C.appendChild(div);
+  });
+}
+
+function updateExportPreview(){
+  const raw=document.getElementById("export-date").value;
+  if(!raw||!cTech)return;
+  const ws=getWS(raw),days=getWD(ws),tot=totNet(cTech,days),diff=tot-TARGET,ot=weeklyOT(tot);
+  const filled=days.filter(d=>db[cTech]?.[d]).length;
+  document.getElementById("export-preview").innerHTML=`<strong>${cTech}</strong> – Sem. du ${fmt(ws)} au ${fmt(days[6])}<br>Heures nettes : <strong>${tot.toFixed(2)}h / ${TARGET}h</strong> (${diff>=0?"+":""}${diff.toFixed(2)}h)<br>${ot.h25>0?`H.Supp +25% : ${ot.h25.toFixed(2)}h<br>`:""}${ot.h50>0?`H.Supp +50% : ${ot.h50.toFixed(2)}h<br>`:""}${filled} jour(s) renseigné(s) sur 7`;
+}
+
+function generateReport(){
+  const raw=document.getElementById("export-date").value||toDay();
+  const ws=getWS(raw),days=getWD(ws),tot=totNet(cTech,days),diff=tot-TARGET,ot=weeklyOT(tot);
+  const cM={"none":"—","avant":"Atelier avant","apres":"Atelier après","les_deux":"Atelier avant & après"};
+  const rows=days.map(d=>{
+    const e=db[cTech]?.[d],h=e?computeH(e.slots||[]):{gross:0,pause:0,net:0,ot:0};
+    let ch="—",hor="—";
+    if(e?.slots){
+      if(e.mode==="multiple"){ch=e.slots.map(s=>`${s.chantier||"?"}`).join(" / ");hor=e.slots.map(s=>`${s.start||"?"}–${s.end||"?"}`).join(" / ");}
+      else{const s=e.slots[0];ch=s?.chantier||"—";hor=s?.start?`${s.start}–${s.end}`:"—";}
+    }
+    return `<tr><td>${fmt(d)}</td><td>${hor}</td><td>${ch}</td><td>${h.gross>0?h.gross.toFixed(2)+"h":"—"}</td><td>${h.pause>0?"-1h":"—"}</td><td><strong>${h.net>0?h.net.toFixed(2)+"h":"—"}</strong></td><td style="color:${h.ot>0?"#633806":"#999"}">${h.ot>0?"+"+h.ot.toFixed(2)+"h":"—"}</td><td>${e?.colis?cM[e.colis]:"—"}</td></tr>`;
+  }).join("");
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport ${cTech}</title>
+<style>body{font-family:Arial,sans-serif;margin:32px;color:#222}h1{font-size:20px;margin-bottom:4px}p{font-size:13px;color:#555;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:12px}th{background:#f0f0f0;padding:8px 6px;text-align:left;border-bottom:2px solid #ccc}td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}.tr{background:#f7f7f7;font-weight:bold}.to{background:#FAEEDA;color:#633806;font-weight:bold}.ok{display:inline-block;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:bold;background:#E1F5EE;color:#085041}.nok{display:inline-block;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:bold;background:#FCEBEB;color:#A32D2D}footer{margin-top:24px;font-size:11px;color:#aaa}</style></head><body>
+<h1>Rapport hebdomadaire – ${cTech}</h1>
+<p><strong>Semaine :</strong> ${fmt(ws)} au ${fmt(days[6])}</p>
+<p><strong>Généré le :</strong> ${fmt(toDay())}</p>
+<p style="margin-top:8px"><span class="${tot>=TARGET?"ok":"nok"}">${tot>=TARGET?"Objectif atteint ✓":"Objectif non atteint"}</span></p>
+<table><thead><tr><th>Date</th><th>Horaires</th><th>Chantier(s)</th><th>Brut</th><th>Pause</th><th>Net</th><th>H.Supp</th><th>Atelier</th></tr></thead>
+<tbody>${rows}<tr class="tr"><td colspan="3">Total semaine</td><td colspan="2"></td><td><strong>${tot.toFixed(2)}h / ${TARGET}h (${diff>=0?"+":""}${diff.toFixed(2)}h)</strong></td><td>${diff>0?"+"+diff.toFixed(2)+"h":"—"}</td><td></td></tr>
+${ot.h25>0||ot.h50>0?`<tr class="to"><td colspan="3">Détail heures supp.</td><td colspan="2"></td><td colspan="2">+25% : ${ot.h25.toFixed(2)}h &nbsp;|&nbsp; +50% : ${ot.h50.toFixed(2)}h</td><td></td></tr>`:""}</tbody></table>
+<footer>Généré automatiquement – Suivi des heures poseurs</footer></body></html>`;
+  const blob=new Blob([html],{type:"text/html"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=`rapport_${cTech}_${ws}.html`;a.click();URL.revokeObjectURL(url);
+}
+
+renderHome();
+</script>
+</body>
+</html>
